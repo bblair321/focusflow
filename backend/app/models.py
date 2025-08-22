@@ -20,6 +20,8 @@ class Goal(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    archived = db.Column(db.Boolean, default=False)
+    archived_at = db.Column(db.DateTime)
     
     # Relationships
     milestones = db.relationship('Milestone', backref='goal', lazy=True, cascade='all, delete-orphan')
@@ -35,6 +37,8 @@ class Goal(db.Model):
             'user_id': self.user_id,
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat(),
+            'archived': self.archived,
+            'archived_at': self.archived_at.isoformat() if self.archived_at else None,
             'milestones': [milestone.to_dict() for milestone in self.milestones]
         }
 

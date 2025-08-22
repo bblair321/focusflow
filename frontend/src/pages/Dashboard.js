@@ -100,7 +100,7 @@ function Dashboard({ user }) {
       {/* Overall Progress Section */}
       <div className="card mb-4">
         <h3 className="mb-3">Overall Progress</h3>
-        <div className="goal-stats">
+        <div className="overall-progress-stats">
           <div className="goal-stat">
             <span className="goal-stat-number">{stats.totalMilestones}</span>
             <span className="goal-stat-label">Total Milestones</span>

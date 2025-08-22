@@ -3,6 +3,7 @@ import GoalForm from "./GoalForm";
 import GoalEditModal from "./GoalEditModal";
 import MilestoneList from "./MilestoneList";
 import ProgressBar from "./ProgressBar";
+import ArchiveModal from "./ArchiveModal";
 import axios from "axios";
 
 function GoalList({ user, onGoalsUpdate }) {
@@ -11,6 +12,7 @@ function GoalList({ user, onGoalsUpdate }) {
   const [error, setError] = useState(null);
   const [editingGoal, setEditingGoal] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
 
   useEffect(() => {
     fetchGoals();
@@ -97,6 +99,31 @@ function GoalList({ user, onGoalsUpdate }) {
     }
   };
 
+  const archiveGoal = async (goalId) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(
+        `/goals/${goalId}/archive`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setGoals(goals.filter((goal) => goal.id !== goalId));
+      if (onGoalsUpdate) onGoalsUpdate();
+      if (window.showToast) {
+        window.showToast("Goal archived successfully!", "success");
+      }
+    } catch (err) {
+      setError("Failed to archive goal");
+      if (window.showToast) {
+        window.showToast("Failed to archive goal", "error");
+      }
+    }
+  };
+
   // Calculate goal progress
   const calculateGoalProgress = (goal) => {
     const totalMilestones = goal.milestones.length;
@@ -115,6 +142,12 @@ function GoalList({ user, onGoalsUpdate }) {
     };
   };
 
+  // Check if goal should show quick archive option
+  const shouldShowQuickArchive = (goal) => {
+    const progress = calculateGoalProgress(goal);
+    return progress.total > 0 && progress.percentage >= 80; // Show for goals 80%+ complete
+  };
+
   if (loading) return <div className="text-center">Loading goals...</div>;
   if (error) return <div className="text-center text-danger">{error}</div>;
 
@@ -122,8 +155,14 @@ function GoalList({ user, onGoalsUpdate }) {
     <div>
       <GoalForm onAddGoal={addGoal} />
 
-      <div className="mb-4">
+      <div className="mb-4 d-flex justify-content-between align-items-center">
         <h3>Your Goals ({goals.length})</h3>
+        <button
+          onClick={() => setIsArchiveModalOpen(true)}
+          className="btn btn-outline-secondary btn-sm"
+        >
+          View Archive
+        </button>
       </div>
 
       {goals.length === 0 ? (
@@ -149,6 +188,13 @@ function GoalList({ user, onGoalsUpdate }) {
                   className="btn btn-secondary me-2"
                 >
                   Edit
+                </button>
+                <button
+                  onClick={() => archiveGoal(goal.id)}
+                  className="btn btn-secondary me-2"
+                  style={{ background: "#6c757d" }}
+                >
+                  Archive
                 </button>
                 <button
                   onClick={() => deleteGoal(goal.id)}
@@ -188,6 +234,23 @@ function GoalList({ user, onGoalsUpdate }) {
                 total={calculateGoalProgress(goal).total}
                 size="large"
               />
+
+              {/* Quick Archive Option */}
+              {shouldShowQuickArchive(goal) && (
+                <div className="quick-archive-section">
+                  <button
+                    onClick={() => archiveGoal(goal.id)}
+                    className="btn btn-outline-success btn-sm"
+                    title="Archive this goal since it's mostly complete"
+                  >
+                    🎯 Quick Archive
+                  </button>
+                  <small className="text-muted d-block mt-1">
+                    This goal is {calculateGoalProgress(goal).percentage}%
+                    complete
+                  </small>
+                </div>
+              )}
             </div>
 
             <MilestoneList
@@ -211,6 +274,13 @@ function GoalList({ user, onGoalsUpdate }) {
           setEditingGoal(null);
         }}
         onSave={updateGoal}
+      />
+
+      {/* Archive Modal */}
+      <ArchiveModal
+        isOpen={isArchiveModalOpen}
+        onClose={() => setIsArchiveModalOpen(false)}
+        onGoalsUpdate={onGoalsUpdate}
       />
     </div>
   );

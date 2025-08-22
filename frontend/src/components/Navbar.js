@@ -13,7 +13,7 @@ function Navbar({ isAuthenticated, user, onLogout }) {
           <ul className="navbar-nav">
             {isAuthenticated ? (
               <>
-                <li>
+                <li className="welcome-message">
                   <span>Welcome, {user?.username}!</span>
                 </li>
                 <li>
@@ -25,10 +25,10 @@ function Navbar({ isAuthenticated, user, onLogout }) {
             ) : (
               <>
                 <li>
-                  <Link to="/login">Login</Link>
+                  <Link to="/login" className="nav-link">Login</Link>
                 </li>
                 <li>
-                  <Link to="/register">Register</Link>
+                  <Link to="/register" className="nav-link">Register</Link>
                 </li>
               </>
             )}

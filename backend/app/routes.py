@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from .models import db, Goal, Milestone
 from .auth import login_required
+from datetime import datetime
 
 goals_bp = Blueprint('goals', __name__)
 
@@ -8,9 +9,15 @@ goals_bp = Blueprint('goals', __name__)
 @goals_bp.route('/', methods=['GET'])
 @login_required
 def get_goals():
-    """Get all goals for the authenticated user"""
+    """Get all active (non-archived) goals for the authenticated user"""
     user_id = request.user_id  # Set by login_required decorator
-    goals = Goal.query.filter_by(user_id=user_id).all()
+    include_archived = request.args.get('include_archived', 'false').lower() == 'true'
+    
+    if include_archived:
+        goals = Goal.query.filter_by(user_id=user_id).all()
+    else:
+        goals = Goal.query.filter_by(user_id=user_id, archived=False).all()
+    
     return jsonify([goal.to_dict() for goal in goals])
 
 @goals_bp.route('/', methods=['POST'])
@@ -81,6 +88,46 @@ def delete_goal(goal_id):
     
     return jsonify({'message': 'Goal deleted successfully'})
 
+@goals_bp.route('/<int:goal_id>/archive', methods=['POST'])
+@login_required
+def archive_goal(goal_id):
+    """Archive a goal (soft delete)"""
+    user_id = request.user_id
+    goal = Goal.query.filter_by(id=goal_id, user_id=user_id).first()
+    
+    if not goal:
+        return jsonify({'error': 'Goal not found'}), 404
+    
+    goal.archived = True
+    goal.archived_at = datetime.utcnow()
+    db.session.commit()
+    
+    return jsonify({'message': 'Goal archived successfully'})
+
+@goals_bp.route('/<int:goal_id>/unarchive', methods=['POST'])
+@login_required
+def unarchive_goal(goal_id):
+    """Unarchive a goal"""
+    user_id = request.user_id
+    goal = Goal.query.filter_by(id=goal_id, user_id=user_id).first()
+    
+    if not goal:
+        return jsonify({'error': 'Goal not found'}), 404
+    
+    goal.archived = False
+    goal.archived_at = None
+    db.session.commit()
+    
+    return jsonify({'message': 'Goal unarchived successfully'})
+
+@goals_bp.route('/archived', methods=['GET'])
+@login_required
+def get_archived_goals():
+    """Get all archived goals for the authenticated user"""
+    user_id = request.user_id
+    goals = Goal.query.filter_by(user_id=user_id, archived=True).all()
+    return jsonify([goal.to_dict() for goal in goals])
+
 # Milestones endpoints
 @goals_bp.route('/<int:goal_id>/milestones', methods=['GET'])
 @login_required
@@ -140,6 +187,14 @@ def update_milestone(milestone_id):
         milestone.completed = data['completed']
     
     db.session.commit()
+    
+    # Check if all milestones are completed and auto-archive the goal
+    goal = Goal.query.get(milestone.goal_id)
+    if goal and all(m.completed for m in goal.milestones) and len(goal.milestones) > 0:
+        goal.archived = True
+        goal.archived_at = datetime.utcnow()
+        db.session.commit()
+    
     return jsonify(milestone.to_dict())
 
 @goals_bp.route('/milestones/<int:milestone_id>', methods=['DELETE'])

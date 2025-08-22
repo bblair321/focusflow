@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import GoalList from "../components/GoalList";
+import ProgressBar from "../components/ProgressBar";
 import axios from "axios";
 
 function Dashboard({ user }) {
@@ -33,10 +34,27 @@ function Dashboard({ user }) {
         0
       );
 
+      // Calculate goal completion rates
+      const completedGoals = goals.filter(
+        (goal) =>
+          goal.milestones.length > 0 &&
+          goal.milestones.every((m) => m.completed)
+      ).length;
+
+      const goalCompletionRate =
+        totalGoals === 0 ? 0 : Math.round((completedGoals / totalGoals) * 100);
+      const milestoneCompletionRate =
+        totalMilestones === 0
+          ? 0
+          : Math.round((completedMilestones / totalMilestones) * 100);
+
       setStats({
         totalGoals,
         completedMilestones,
         totalMilestones,
+        completedGoals,
+        goalCompletionRate,
+        milestoneCompletionRate,
       });
     } catch (error) {
       console.error("Failed to fetch stats:", error);
@@ -71,8 +89,41 @@ function Dashboard({ user }) {
               : 0}
             %
           </div>
-          <div className="stat-label">Completion Rate</div>
+          <div className="stat-label">Milestone Completion</div>
         </div>
+        <div className="stat-card">
+          <div className="stat-number">{stats.completedGoals}</div>
+          <div className="stat-label">Completed Goals</div>
+        </div>
+      </div>
+
+      {/* Overall Progress Section */}
+      <div className="card mb-4">
+        <h3 className="mb-3">Overall Progress</h3>
+        <div className="goal-stats">
+          <div className="goal-stat">
+            <span className="goal-stat-number">{stats.totalMilestones}</span>
+            <span className="goal-stat-label">Total Milestones</span>
+          </div>
+          <div className="goal-stat">
+            <span className="goal-stat-number">
+              {stats.completedMilestones}
+            </span>
+            <span className="goal-stat-label">Completed</span>
+          </div>
+          <div className="goal-stat">
+            <span className="goal-stat-number">
+              {stats.milestoneCompletionRate}%
+            </span>
+            <span className="goal-stat-label">Progress</span>
+          </div>
+        </div>
+
+        <ProgressBar
+          completed={stats.completedMilestones}
+          total={stats.totalMilestones}
+          size="large"
+        />
       </div>
 
       {/* Goals List */}

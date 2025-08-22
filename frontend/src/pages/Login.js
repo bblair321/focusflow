@@ -34,6 +34,9 @@ function Login({ onLogin }) {
       const response = await axios.post("/auth/login", formData);
 
       if (response.data.token) {
+        if (window.showToast) {
+          window.showToast("Login successful!", "success");
+        }
         onLogin(response.data, response.data.token);
       } else {
         setError("Login failed. Please try again.");

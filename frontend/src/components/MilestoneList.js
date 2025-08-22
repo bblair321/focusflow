@@ -28,8 +28,14 @@ function MilestoneList({ goalId, milestones, onMilestoneUpdate }) {
 
       setNewMilestone("");
       onMilestoneUpdate(); // Refresh the goals list
+      if (window.showToast) {
+        window.showToast("Milestone added successfully!", "success");
+      }
     } catch (error) {
       console.error("Failed to create milestone:", error);
+      if (window.showToast) {
+        window.showToast("Failed to add milestone", "error");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -51,8 +57,14 @@ function MilestoneList({ goalId, milestones, onMilestoneUpdate }) {
       );
 
       onMilestoneUpdate(); // Refresh the goals list
+      if (window.showToast) {
+        window.showToast("Milestone updated successfully!", "success");
+      }
     } catch (error) {
       console.error("Failed to update milestone:", error);
+      if (window.showToast) {
+        window.showToast("Failed to update milestone", "error");
+      }
     }
   };
 
@@ -66,8 +78,14 @@ function MilestoneList({ goalId, milestones, onMilestoneUpdate }) {
       });
 
       onMilestoneUpdate(); // Refresh the goals list
+      if (window.showToast) {
+        window.showToast("Milestone deleted successfully!", "success");
+      }
     } catch (error) {
       console.error("Failed to delete milestone:", error);
+      if (window.showToast) {
+        window.showToast("Failed to delete milestone", "error");
+      }
     }
   };
 
@@ -84,6 +102,7 @@ function MilestoneList({ goalId, milestones, onMilestoneUpdate }) {
             value={newMilestone}
             onChange={(e) => setNewMilestone(e.target.value)}
             placeholder="Add a new milestone..."
+            maxLength="200"
             disabled={isSubmitting}
           />
           <button
@@ -93,6 +112,13 @@ function MilestoneList({ goalId, milestones, onMilestoneUpdate }) {
           >
             {isSubmitting ? "Adding..." : "Add"}
           </button>
+        </div>
+        <div
+          className={`char-counter ${
+            newMilestone.length > 150 ? "warning" : ""
+          } ${newMilestone.length > 180 ? "danger" : ""}`}
+        >
+          {newMilestone.length}/200 characters
         </div>
       </form>
 

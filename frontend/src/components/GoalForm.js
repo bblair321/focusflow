@@ -41,8 +41,16 @@ function GoalForm({ onAddGoal }) {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="What do you want to achieve?"
+            maxLength="200"
             required
           />
+          <div
+            className={`char-counter ${title.length > 150 ? "warning" : ""} ${
+              title.length > 180 ? "danger" : ""
+            }`}
+          >
+            {title.length}/200 characters
+          </div>
         </div>
 
         <div className="form-group">
@@ -54,7 +62,15 @@ function GoalForm({ onAddGoal }) {
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Optional: Add more details about your goal"
             rows="3"
+            maxLength="1000"
           />
+          <div
+            className={`char-counter ${
+              description.length > 800 ? "warning" : ""
+            } ${description.length > 950 ? "danger" : ""}`}
+          >
+            {description.length}/1000 characters
+          </div>
         </div>
 
         <button

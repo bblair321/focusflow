@@ -60,6 +60,12 @@ function Register({ onLogin }) {
         });
 
         if (loginResponse.data.token) {
+          if (window.showToast) {
+            window.showToast(
+              "Account created and logged in successfully!",
+              "success"
+            );
+          }
           onLogin(loginResponse.data, loginResponse.data.token);
         }
       }

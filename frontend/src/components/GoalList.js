@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from "react";
 import GoalForm from "./GoalForm";
+import GoalEditModal from "./GoalEditModal";
 import MilestoneList from "./MilestoneList";
+import ProgressBar from "./ProgressBar";
 import axios from "axios";
 
-function GoalList({ user }) {
+function GoalList({ user, onGoalsUpdate }) {
   const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [editingGoal, setEditingGoal] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   useEffect(() => {
     fetchGoals();
@@ -37,8 +41,15 @@ function GoalList({ user }) {
         },
       });
       setGoals([...goals, response.data]);
+      if (onGoalsUpdate) onGoalsUpdate();
+      if (window.showToast) {
+        window.showToast("Goal created successfully!", "success");
+      }
     } catch (err) {
       setError("Failed to create goal");
+      if (window.showToast) {
+        window.showToast("Failed to create goal", "error");
+      }
     }
   };
 
@@ -53,8 +64,15 @@ function GoalList({ user }) {
       setGoals(
         goals.map((goal) => (goal.id === goalId ? response.data : goal))
       );
+      if (onGoalsUpdate) onGoalsUpdate();
+      if (window.showToast) {
+        window.showToast("Goal updated successfully!", "success");
+      }
     } catch (err) {
       setError("Failed to update goal");
+      if (window.showToast) {
+        window.showToast("Failed to update goal", "error");
+      }
     }
   };
 
@@ -67,9 +85,34 @@ function GoalList({ user }) {
         },
       });
       setGoals(goals.filter((goal) => goal.id !== goalId));
+      if (onGoalsUpdate) onGoalsUpdate();
+      if (window.showToast) {
+        window.showToast("Goal deleted successfully!", "success");
+      }
     } catch (err) {
       setError("Failed to delete goal");
+      if (window.showToast) {
+        window.showToast("Failed to delete goal", "error");
+      }
     }
+  };
+
+  // Calculate goal progress
+  const calculateGoalProgress = (goal) => {
+    const totalMilestones = goal.milestones.length;
+    const completedMilestones = goal.milestones.filter(
+      (m) => m.completed
+    ).length;
+    const percentage =
+      totalMilestones === 0
+        ? 0
+        : Math.round((completedMilestones / totalMilestones) * 100);
+
+    return {
+      total: totalMilestones,
+      completed: completedMilestones,
+      percentage,
+    };
   };
 
   if (loading) return <div className="text-center">Loading goals...</div>;
@@ -99,12 +142,10 @@ function GoalList({ user }) {
               </div>
               <div>
                 <button
-                  onClick={() =>
-                    updateGoal(goal.id, {
-                      title: goal.title,
-                      description: goal.description,
-                    })
-                  }
+                  onClick={() => {
+                    setEditingGoal(goal);
+                    setIsEditModalOpen(true);
+                  }}
                   className="btn btn-secondary me-2"
                 >
                   Edit
@@ -119,14 +160,58 @@ function GoalList({ user }) {
               </div>
             </div>
 
+            {/* Goal Progress Section */}
+            <div className="goal-progress-section">
+              <div className="goal-stats">
+                <div className="goal-stat">
+                  <span className="goal-stat-number">
+                    {goal.milestones.length}
+                  </span>
+                  <span className="goal-stat-label">Total Milestones</span>
+                </div>
+                <div className="goal-stat">
+                  <span className="goal-stat-number">
+                    {goal.milestones.filter((m) => m.completed).length}
+                  </span>
+                  <span className="goal-stat-label">Completed</span>
+                </div>
+                <div className="goal-stat">
+                  <span className="goal-stat-number">
+                    {calculateGoalProgress(goal).percentage}%
+                  </span>
+                  <span className="goal-stat-label">Progress</span>
+                </div>
+              </div>
+
+              <ProgressBar
+                completed={calculateGoalProgress(goal).completed}
+                total={calculateGoalProgress(goal).total}
+                size="large"
+              />
+            </div>
+
             <MilestoneList
               goalId={goal.id}
               milestones={goal.milestones}
-              onMilestoneUpdate={() => fetchGoals()}
+              onMilestoneUpdate={() => {
+                fetchGoals();
+                if (onGoalsUpdate) onGoalsUpdate();
+              }}
             />
           </div>
         ))
       )}
+
+      {/* Edit Goal Modal */}
+      <GoalEditModal
+        goal={editingGoal}
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingGoal(null);
+        }}
+        onSave={updateGoal}
+      />
     </div>
   );
 }

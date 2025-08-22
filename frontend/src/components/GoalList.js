@@ -13,9 +13,16 @@ function GoalList({ user, onGoalsUpdate }) {
   const [editingGoal, setEditingGoal] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
+  const [archiveCount, setArchiveCount] = useState(0);
 
   useEffect(() => {
     fetchGoals();
+    fetchArchiveCount();
+
+    // Set up periodic refresh of archive count every 30 seconds
+    const interval = setInterval(fetchArchiveCount, 30000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const fetchGoals = async () => {
@@ -26,11 +33,27 @@ function GoalList({ user, onGoalsUpdate }) {
           Authorization: `Bearer ${token}`,
         },
       });
+
       setGoals(response.data);
       setLoading(false);
     } catch (err) {
       setError("Failed to fetch goals");
       setLoading(false);
+    }
+  };
+
+  const fetchArchiveCount = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get("/goals/archived", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const count = response.data.length;
+      setArchiveCount(count);
+    } catch (err) {
+      console.error("Failed to fetch archive count:", err);
     }
   };
 
@@ -112,6 +135,10 @@ function GoalList({ user, onGoalsUpdate }) {
         }
       );
       setGoals(goals.filter((goal) => goal.id !== goalId));
+      // Refresh archive count after a short delay to ensure backend is updated
+      setTimeout(() => {
+        fetchArchiveCount();
+      }, 100);
       if (onGoalsUpdate) onGoalsUpdate();
       if (window.showToast) {
         window.showToast("Goal archived successfully!", "success");
@@ -158,10 +185,31 @@ function GoalList({ user, onGoalsUpdate }) {
       <div className="mb-4 d-flex justify-content-between align-items-center">
         <h3>Your Goals ({goals.length})</h3>
         <button
-          onClick={() => setIsArchiveModalOpen(true)}
-          className="btn btn-outline-secondary btn-sm"
+          onClick={() => {
+            setIsArchiveModalOpen(true);
+            fetchArchiveCount(); // Refresh count when opening modal
+          }}
+          className="btn btn-outline-secondary btn-sm archive-button"
+          title={
+            archiveCount === 0
+              ? "No archived goals"
+              : `${archiveCount} goal${archiveCount !== 1 ? "s" : ""} archived`
+          }
         >
           View Archive
+          {archiveCount > 0 && (
+            <span
+              className={`archive-badge ${
+                archiveCount >= 10
+                  ? "count-very-high"
+                  : archiveCount >= 5
+                  ? "count-high"
+                  : ""
+              }`}
+            >
+              {archiveCount}
+            </span>
+          )}
         </button>
       </div>
 
@@ -279,7 +327,10 @@ function GoalList({ user, onGoalsUpdate }) {
       {/* Archive Modal */}
       <ArchiveModal
         isOpen={isArchiveModalOpen}
-        onClose={() => setIsArchiveModalOpen(false)}
+        onClose={() => {
+          setIsArchiveModalOpen(false);
+          fetchArchiveCount(); // Refresh count when closing modal
+        }}
         onGoalsUpdate={onGoalsUpdate}
       />
     </div>

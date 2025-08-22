@@ -16,7 +16,11 @@ def get_goals():
     if include_archived:
         goals = Goal.query.filter_by(user_id=user_id).all()
     else:
-        goals = Goal.query.filter_by(user_id=user_id, archived=False).all()
+        # A goal is active if archived is explicitly False or None/undefined
+        goals = Goal.query.filter(
+            Goal.user_id == user_id,
+            (Goal.archived == False) | (Goal.archived.is_(None))
+        ).all()
     
     return jsonify([goal.to_dict() for goal in goals])
 
@@ -185,6 +189,11 @@ def update_milestone(milestone_id):
         milestone.title = data['title']
     if 'completed' in data:
         milestone.completed = data['completed']
+        # Set completed_at timestamp when milestone is completed
+        if data['completed']:
+            milestone.completed_at = datetime.utcnow()
+        else:
+            milestone.completed_at = None
     
     db.session.commit()
     

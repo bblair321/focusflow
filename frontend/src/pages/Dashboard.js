@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import GoalList from "../components/GoalList";
-import ProgressBar from "../components/ProgressBar";
+import GoalCalendar from "../components/GoalCalendar";
 import axios from "axios";
 
 function Dashboard({ user }) {
@@ -9,6 +9,7 @@ function Dashboard({ user }) {
     completedMilestones: 0,
     totalMilestones: 0,
   });
+  const [goals, setGoals] = useState([]);
 
   useEffect(() => {
     fetchStats();
@@ -17,25 +18,27 @@ function Dashboard({ user }) {
   const fetchStats = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get("/goals/", {
+      // Fetch both active and archived goals for the calendar
+      const response = await axios.get("/goals/?include_archived=true", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      const goals = response.data;
-      const totalGoals = goals.length;
-      const totalMilestones = goals.reduce(
+      const goalsData = response.data;
+      setGoals(goalsData);
+      const totalGoals = goalsData.length;
+      const totalMilestones = goalsData.reduce(
         (sum, goal) => sum + goal.milestones.length,
         0
       );
-      const completedMilestones = goals.reduce(
+      const completedMilestones = goalsData.reduce(
         (sum, goal) => sum + goal.milestones.filter((m) => m.completed).length,
         0
       );
 
       // Calculate goal completion rates
-      const completedGoals = goals.filter(
+      const completedGoals = goalsData.filter(
         (goal) =>
           goal.milestones.length > 0 &&
           goal.milestones.every((m) => m.completed)
@@ -97,33 +100,14 @@ function Dashboard({ user }) {
         </div>
       </div>
 
-      {/* Overall Progress Section */}
+      {/* Goal Calendar Section */}
       <div className="card mb-4">
-        <h3 className="mb-3">Overall Progress</h3>
-        <div className="overall-progress-stats">
-          <div className="goal-stat">
-            <span className="goal-stat-number">{stats.totalMilestones}</span>
-            <span className="goal-stat-label">Total Milestones</span>
-          </div>
-          <div className="goal-stat">
-            <span className="goal-stat-number">
-              {stats.completedMilestones}
-            </span>
-            <span className="goal-stat-label">Completed</span>
-          </div>
-          <div className="goal-stat">
-            <span className="goal-stat-number">
-              {stats.milestoneCompletionRate}%
-            </span>
-            <span className="goal-stat-label">Progress</span>
-          </div>
-        </div>
-
-        <ProgressBar
-          completed={stats.completedMilestones}
-          total={stats.totalMilestones}
-          size="large"
-        />
+        <h3 className="mb-3">Goal Timeline</h3>
+        <p className="text-muted mb-3">
+          Track your progress with this interactive calendar showing when goals
+          were created, milestones were completed, and goals were finished.
+        </p>
+        <GoalCalendar goals={goals} />
       </div>
 
       {/* Goals List */}

@@ -48,6 +48,7 @@ class Milestone(db.Model):
     completed = db.Column(db.Boolean, default=False)
     goal_id = db.Column(db.Integer, db.ForeignKey('goal.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    completed_at = db.Column(db.DateTime)
     
     def __repr__(self):
         return f'<Milestone {self.title}>'
@@ -58,5 +59,6 @@ class Milestone(db.Model):
             'title': self.title,
             'completed': self.completed,
             'goal_id': self.goal_id,
-            'created_at': self.created_at.isoformat()
+            'created_at': self.created_at.isoformat(),
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None
         }

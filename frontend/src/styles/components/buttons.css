@@ -1,0 +1,138 @@
+/* ===================================
+   BUTTONS
+   =================================== */
+
+.btn {
+  display: inline-block;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: #007bff;
+  color: white;
+}
+
+.btn:hover {
+  background-color: #0056b3;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+}
+
+.btn-secondary:hover {
+  background-color: #545b62;
+}
+
+.btn-outline-success {
+  background: transparent;
+  color: #28a745;
+  border: 1px solid #28a745;
+}
+
+.btn-outline-success:hover {
+  background: #28a745;
+  color: white;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 4px;
+}
+
+/* Button States */
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Delete buttons - keep red color as per user preference */
+.btn-delete {
+  background-color: #dc3545 !important;
+  border-color: #dc3545 !important;
+  color: white !important;
+}
+
+.btn-delete:hover {
+  background-color: #c82333 !important;
+  border-color: #bd2130 !important;
+}
+
+.btn-delete:focus {
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+/* Milestone delete button */
+.milestone-delete-btn {
+  background: #dc3545;
+  border: 1px solid #dc3545;
+  color: white;
+  padding: 4px 8px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: 8px;
+  min-width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.milestone-delete-btn:hover {
+  background: #c82333;
+  border-color: #bd2130;
+  transform: scale(1.05);
+}
+
+.milestone-delete-btn:active {
+  transform: scale(0.95);
+}
+
+.milestone-delete-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
+}
+
+/* Milestone item layout */
+.milestone-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.milestone-item:last-child {
+  border-bottom: none;
+}
+
+.milestone-checkbox {
+  margin: 0;
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+.milestone-title {
+  flex: 1;
+  font-size: 14px;
+  color: #333;
+  line-height: 1.4;
+}
+
+.milestone-title.milestone-completed {
+  text-decoration: line-through;
+  color: #6c757d;
+  opacity: 0.7;
+}

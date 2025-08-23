@@ -8,22 +8,51 @@ import axios from "axios";
 
 function GoalList({ user, onGoalsUpdate }) {
   const [goals, setGoals] = useState([]);
+  const [filteredGoals, setFilteredGoals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editingGoal, setEditingGoal] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
   const [archiveCount, setArchiveCount] = useState(0);
+  const [categories, setCategories] = useState({});
+  const [selectedCategory, setSelectedCategory] = useState("All");
 
   useEffect(() => {
     fetchGoals();
     fetchArchiveCount();
+    fetchCategories();
 
     // Set up periodic refresh of archive count every 30 seconds
     const interval = setInterval(fetchArchiveCount, 30000);
 
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    // Filter goals based on selected category
+    if (selectedCategory === "All") {
+      setFilteredGoals(goals);
+    } else {
+      setFilteredGoals(
+        goals.filter((goal) => goal.category === selectedCategory)
+      );
+    }
+  }, [goals, selectedCategory]);
+
+  const fetchCategories = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get("/goals/categories", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setCategories(response.data);
+    } catch (error) {
+      console.error("Failed to fetch categories:", error);
+    }
+  };
 
   const fetchGoals = async () => {
     try {
@@ -67,9 +96,7 @@ function GoalList({ user, onGoalsUpdate }) {
       });
       setGoals([...goals, response.data]);
       if (onGoalsUpdate) onGoalsUpdate();
-      if (window.showToast) {
-        window.showToast("Goal created successfully!", "success");
-      }
+      // Toast notification handled by parent component
     } catch (err) {
       setError("Failed to create goal");
       if (window.showToast) {
@@ -90,9 +117,7 @@ function GoalList({ user, onGoalsUpdate }) {
         goals.map((goal) => (goal.id === goalId ? response.data : goal))
       );
       if (onGoalsUpdate) onGoalsUpdate();
-      if (window.showToast) {
-        window.showToast("Goal updated successfully!", "success");
-      }
+      // Toast notification handled by parent component
     } catch (err) {
       setError("Failed to update goal");
       if (window.showToast) {
@@ -102,22 +127,22 @@ function GoalList({ user, onGoalsUpdate }) {
   };
 
   const deleteGoal = async (goalId) => {
-    try {
-      const token = localStorage.getItem("token");
-      await axios.delete(`/goals/${goalId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setGoals(goals.filter((goal) => goal.id !== goalId));
-      if (onGoalsUpdate) onGoalsUpdate();
-      if (window.showToast) {
-        window.showToast("Goal deleted successfully!", "success");
-      }
-    } catch (err) {
-      setError("Failed to delete goal");
-      if (window.showToast) {
-        window.showToast("Failed to delete goal", "error");
+    if (window.confirm("Are you sure you want to delete this goal?")) {
+      try {
+        const token = localStorage.getItem("token");
+        await axios.delete(`/goals/${goalId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setGoals(goals.filter((goal) => goal.id !== goalId));
+        if (onGoalsUpdate) onGoalsUpdate();
+        // Toast notification handled by parent component
+      } catch (err) {
+        setError("Failed to delete goal");
+        if (window.showToast) {
+          window.showToast("Failed to delete goal", "error");
+        }
       }
     }
   };
@@ -135,14 +160,8 @@ function GoalList({ user, onGoalsUpdate }) {
         }
       );
       setGoals(goals.filter((goal) => goal.id !== goalId));
-      // Refresh archive count after a short delay to ensure backend is updated
-      setTimeout(() => {
-        fetchArchiveCount();
-      }, 100);
       if (onGoalsUpdate) onGoalsUpdate();
-      if (window.showToast) {
-        window.showToast("Goal archived successfully!", "success");
-      }
+      // Toast notification handled by parent component
     } catch (err) {
       setError("Failed to archive goal");
       if (window.showToast) {
@@ -151,50 +170,84 @@ function GoalList({ user, onGoalsUpdate }) {
     }
   };
 
-  // Calculate goal progress
   const calculateGoalProgress = (goal) => {
-    const totalMilestones = goal.milestones.length;
-    const completedMilestones = goal.milestones.filter(
-      (m) => m.completed
-    ).length;
-    const percentage =
-      totalMilestones === 0
-        ? 0
-        : Math.round((completedMilestones / totalMilestones) * 100);
-
-    return {
-      total: totalMilestones,
-      completed: completedMilestones,
-      percentage,
-    };
+    const total = goal.milestones.length;
+    const completed = goal.milestones.filter((m) => m.completed).length;
+    const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
+    return { total, completed, percentage };
   };
 
-  // Check if goal should show quick archive option
   const shouldShowQuickArchive = (goal) => {
     const progress = calculateGoalProgress(goal);
-    return progress.total > 0 && progress.percentage >= 80; // Show for goals 80%+ complete
+    return progress.total > 0 && progress.percentage >= 80;
   };
 
-  if (loading) return <div className="text-center">Loading goals...</div>;
-  if (error) return <div className="text-center text-danger">{error}</div>;
+  // Category filter component
+  const CategoryFilter = () => (
+    <div className="category-filter">
+      <h4>Filter by category:</h4>
+      <select
+        className="category-filter-select"
+        value={selectedCategory}
+        onChange={(e) => setSelectedCategory(e.target.value)}
+      >
+        <option value="All">All Categories</option>
+        {Object.keys(categories).map((cat) => (
+          <option key={cat} value={cat}>
+            {cat}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+
+  // Category tag component
+  const CategoryTag = ({ category }) => {
+    const color = categories[category] || "#6B7280";
+    return (
+      <span
+        className="category-tag"
+        style={{
+          backgroundColor: color,
+          color: "white",
+          padding: "4px 8px",
+          borderRadius: "12px",
+          fontSize: "12px",
+          fontWeight: "500",
+          display: "inline-block",
+          marginBottom: "8px",
+        }}
+      >
+        {category}
+      </span>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="text-center">
+        <p>Loading goals...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="alert alert-danger" role="alert">
+        {error}
+      </div>
+    );
+  }
 
   return (
     <div>
       <GoalForm onAddGoal={addGoal} />
 
-      <div className="mb-4 d-flex justify-content-between align-items-center">
-        <h3>Your Goals ({goals.length})</h3>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h3>Your Goals</h3>
         <button
-          onClick={() => {
-            setIsArchiveModalOpen(true);
-            fetchArchiveCount(); // Refresh count when opening modal
-          }}
-          className="btn btn-outline-secondary btn-sm archive-button"
-          title={
-            archiveCount === 0
-              ? "No archived goals"
-              : `${archiveCount} goal${archiveCount !== 1 ? "s" : ""} archived`
-          }
+          onClick={() => setIsArchiveModalOpen(true)}
+          className="btn btn-secondary position-relative"
         >
           View Archive
           {archiveCount > 0 && (
@@ -213,15 +266,24 @@ function GoalList({ user, onGoalsUpdate }) {
         </button>
       </div>
 
-      {goals.length === 0 ? (
+      <CategoryFilter />
+
+      {filteredGoals.length === 0 ? (
         <div className="card text-center">
-          <p>No goals yet. Create your first goal to get started!</p>
+          <p>
+            {selectedCategory === "All"
+              ? "No goals yet. Create your first goal to get started!"
+              : `No goals in the "${selectedCategory}" category.`}
+          </p>
         </div>
       ) : (
-        goals.map((goal) => (
+        filteredGoals.map((goal) => (
           <div key={goal.id} className="goal-item">
             <div className="d-flex justify-content-between align-items-center mb-3">
               <div>
+                <div className="d-flex align-items-center mb-2">
+                  <CategoryTag category={goal.category} />
+                </div>
                 <h4 className="goal-title">{goal.title}</h4>
                 {goal.description && (
                   <p className="goal-description">{goal.description}</p>

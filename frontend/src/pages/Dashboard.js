@@ -10,10 +10,60 @@ function Dashboard({ user }) {
     totalMilestones: 0,
   });
   const [goals, setGoals] = useState([]);
+  const [categories, setCategories] = useState({});
+  const [categoryStats, setCategoryStats] = useState({});
 
   useEffect(() => {
     fetchStats();
+    fetchCategories();
   }, []);
+
+  useEffect(() => {
+    // Calculate category statistics when goals change
+    if (goals.length > 0 && Object.keys(categories).length > 0) {
+      calculateCategoryStats();
+    }
+  }, [goals, categories]);
+
+  const fetchCategories = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get("/goals/categories", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setCategories(response.data);
+    } catch (error) {
+      console.error("Failed to fetch categories:", error);
+    }
+  };
+
+  const calculateCategoryStats = () => {
+    const stats = {};
+    Object.keys(categories).forEach((cat) => {
+      const categoryGoals = goals.filter((goal) => goal.category === cat);
+      const totalMilestones = categoryGoals.reduce(
+        (sum, goal) => sum + goal.milestones.length,
+        0
+      );
+      const completedMilestones = categoryGoals.reduce(
+        (sum, goal) => sum + goal.milestones.filter((m) => m.completed).length,
+        0
+      );
+
+      stats[cat] = {
+        count: categoryGoals.length,
+        totalMilestones,
+        completedMilestones,
+        percentage:
+          totalMilestones > 0
+            ? Math.round((completedMilestones / totalMilestones) * 100)
+            : 0,
+      };
+    });
+    setCategoryStats(stats);
+  };
 
   const fetchStats = async () => {
     try {
@@ -36,33 +86,70 @@ function Dashboard({ user }) {
         (sum, goal) => sum + goal.milestones.filter((m) => m.completed).length,
         0
       );
-
-      // Calculate goal completion rates
-      const completedGoals = goalsData.filter(
-        (goal) =>
-          goal.milestones.length > 0 &&
-          goal.milestones.every((m) => m.completed)
+      const completedGoals = goalsData.filter((goal) => 
+        goal.milestones.length > 0 && 
+        goal.milestones.every((m) => m.completed)
       ).length;
-
-      const goalCompletionRate =
-        totalGoals === 0 ? 0 : Math.round((completedGoals / totalGoals) * 100);
-      const milestoneCompletionRate =
-        totalMilestones === 0
-          ? 0
-          : Math.round((completedMilestones / totalMilestones) * 100);
 
       setStats({
         totalGoals,
-        completedMilestones,
         totalMilestones,
+        completedMilestones,
         completedGoals,
-        goalCompletionRate,
-        milestoneCompletionRate,
       });
+      
+      // Show success toast for user feedback
+      if (window.showToast) {
+        window.showToast("Goals updated successfully!", "success");
+      }
     } catch (error) {
       console.error("Failed to fetch stats:", error);
+      if (window.showToast) {
+        window.showToast("Failed to update goals", "error");
+      }
     }
   };
+
+  // Category statistics component
+  const CategoryStats = () => (
+    <div className="card mb-4">
+      <h3 className="mb-3">Goals by Category</h3>
+      <div className="category-stats-grid">
+        {Object.keys(categories).map((category) => {
+          const catStats = categoryStats[category];
+          if (!catStats || catStats.count === 0) return null;
+
+          return (
+            <div key={category} className="category-stat-card">
+              <div className="category-stat-header">
+                <span
+                  className="category-color-dot"
+                  style={{ backgroundColor: categories[category] }}
+                ></span>
+                <h4 className="category-name">{category}</h4>
+              </div>
+              <div className="category-stat-numbers">
+                <div className="category-stat-item">
+                  <span className="stat-number">{catStats.count}</span>
+                  <span className="stat-label">Goals</span>
+                </div>
+                <div className="category-stat-item">
+                  <span className="stat-number">{catStats.percentage}%</span>
+                  <span className="stat-label">Progress</span>
+                </div>
+              </div>
+              <div className="category-stat-details">
+                <small className="text-muted">
+                  {catStats.completedMilestones} of {catStats.totalMilestones}{" "}
+                  milestones completed
+                </small>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 
   return (
     <div className="container">
@@ -99,6 +186,9 @@ function Dashboard({ user }) {
           <div className="stat-label">Completed Goals</div>
         </div>
       </div>
+
+      {/* Category Statistics */}
+      {Object.keys(categoryStats).length > 0 && <CategoryStats />}
 
       {/* Goal Calendar Section */}
       <div className="card mb-4">

@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from .models import db, Goal, Milestone
+from .models import db, Goal, Milestone, GOAL_CATEGORIES
 from .auth import login_required
 from datetime import datetime
 
@@ -12,6 +12,7 @@ def get_goals():
     """Get all active (non-archived) goals for the authenticated user"""
     user_id = request.user_id  # Set by login_required decorator
     include_archived = request.args.get('include_archived', 'false').lower() == 'true'
+    category_filter = request.args.get('category', None)  # New category filter
     
     if include_archived:
         goals = Goal.query.filter_by(user_id=user_id).all()
@@ -22,7 +23,17 @@ def get_goals():
             (Goal.archived == False) | (Goal.archived.is_(None))
         ).all()
     
+    # Apply category filter if specified
+    if category_filter and category_filter != 'All':
+        goals = [goal for goal in goals if goal.category == category_filter]
+    
     return jsonify([goal.to_dict() for goal in goals])
+
+@goals_bp.route('/categories', methods=['GET'])
+@login_required
+def get_categories():
+    """Get all available goal categories with their color codes"""
+    return jsonify(GOAL_CATEGORIES)
 
 @goals_bp.route('/', methods=['POST'])
 @login_required
@@ -37,6 +48,7 @@ def create_goal():
     goal = Goal(
         title=data['title'],
         description=data.get('description', ''),
+        category=data.get('category', 'Personal'),  # New category field
         user_id=user_id
     )
     
@@ -73,6 +85,8 @@ def update_goal(goal_id):
         goal.title = data['title']
     if 'description' in data:
         goal.description = data['description']
+    if 'category' in data:  # New category update
+        goal.category = data['category']
     
     db.session.commit()
     return jsonify(goal.to_dict())

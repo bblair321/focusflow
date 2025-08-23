@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 function GoalCalendar({ goals }) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
-  const [viewMode, setViewMode] = useState("monthly"); // 'daily', 'weekly', 'monthly'
+  const [viewMode, setViewMode] = useState("weekly"); // 'daily', 'weekly', 'monthly'
   const [expandedGroups, setExpandedGroups] = useState({
     "goal-created": true,
     "milestone-completed": true,
@@ -532,118 +532,104 @@ function GoalCalendar({ goals }) {
         </div>
       )}
 
-      {/* Selected Date Events - Only show for Weekly/Monthly views */}
-      {selectedDate && viewMode !== "daily" && (
+      {/* Selected Date Events Display */}
+      {selectedDate && (
         <div className="selected-date-events">
-          <h4 className="selected-date-title">
-            {selectedDate.toLocaleDateString("en-US", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-          </h4>
-          {selectedDateEvents.length === 0 ? (
-            <p className="no-events">No events on this date</p>
-          ) : (
-            <div className="daily-events-grouped">
-              {/* Group events by type */}
-              {(() => {
-                const events = selectedDateEvents;
-                const groupedEvents = {
-                  "goal-created": events.filter(
-                    (e) => e.type === "goal-created"
-                  ),
-                  "milestone-completed": events.filter(
-                    (e) => e.type === "milestone-completed"
-                  ),
-                  "goal-completed": events.filter(
-                    (e) => e.type === "goal-completed"
-                  ),
-                };
+          <div className="selected-date-header">
+            <h4>
+              Events for{" "}
+              {selectedDate.toLocaleDateString("en-US", {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </h4>
+            <button
+              className="close-selected-date"
+              onClick={() => setSelectedDate(null)}
+              title="Close"
+            >
+              ×
+            </button>
+          </div>
+          <div className="selected-date-content">
+            {getEventsForDate(selectedDate).length === 0 ? (
+              <p className="no-events">No events on this date</p>
+            ) : (
+              <div className="selected-events-grouped">
+                {(() => {
+                  const events = getEventsForDate(selectedDate);
+                  const groupedEvents = {
+                    "goal-created": events.filter(
+                      (e) => e.type === "goal-created"
+                    ),
+                    "milestone-completed": events.filter(
+                      (e) => e.type === "milestone-completed"
+                    ),
+                    "goal-completed": events.filter(
+                      (e) => e.type === "goal-completed"
+                    ),
+                  };
 
-                return Object.entries(groupedEvents)
-                  .filter(([type, events]) => events.length > 0)
-                  .map(([type, typeEvents]) => (
-                    <div key={type} className="event-group">
-                      <div className="event-group-header">
-                        <span
-                          className="event-group-icon"
-                          style={{ backgroundColor: getEventColor(type) }}
-                        >
-                          {getEventIcon(type)}
-                        </span>
-                        <span className="event-group-title">
-                          {type
-                            .replace("-", " ")
-                            .replace(/\b\w/g, (l) => l.toUpperCase())}
-                          <span className="event-count">
-                            ({typeEvents.length})
-                          </span>
-                        </span>
-                        <button
-                          className="event-group-toggle"
-                          onClick={() => toggleEventGroup(type)}
-                          aria-label={`Toggle ${type} events`}
-                        >
-                          {expandedGroups[type] ? "−" : "+"}
-                        </button>
-                      </div>
-                      {expandedGroups[type] && (
-                        <div className="event-group-content">
-                          {typeEvents.map((event, index) => (
-                            <div key={index} className="daily-event-card">
-                              <div className="daily-event-header">
-                                {event.isArchived && (
-                                  <span className="archived-badge-small">
-                                    Archived
+                  return Object.entries(groupedEvents)
+                    .filter(([type, typeEvents]) => typeEvents.length > 0)
+                    .map(([type, typeEvents]) => (
+                      <div key={type} className="event-group-collapsed">
+                        <div className="event-group-header-collapsed">
+                          <div className="event-group-info">
+                            <span
+                              className="event-group-icon-collapsed"
+                              style={{ backgroundColor: getEventColor(type) }}
+                            >
+                              {getEventIcon(type)}
+                            </span>
+                            <span className="event-group-title-collapsed">
+                              {type
+                                .replace("-", " ")
+                                .replace(/\b\w/g, (l) => l.toUpperCase())}
+                              <span className="event-count-collapsed">
+                                ({typeEvents.length})
+                              </span>
+                            </span>
+                          </div>
+                          <button
+                            className="event-group-toggle-collapsed"
+                            onClick={() => toggleEventGroup(type)}
+                            aria-label={`Toggle ${type} events`}
+                          >
+                            {expandedGroups[type] ? "−" : "+"}
+                          </button>
+                        </div>
+                        {expandedGroups[type] && (
+                          <div className="event-group-content-collapsed">
+                            {typeEvents.map((event, index) => (
+                              <div key={index} className="selected-event-item-collapsed">
+                                <div className="selected-event-details-collapsed">
+                                  <span className="selected-event-title-collapsed">
+                                    {event.title}
                                   </span>
-                                )}
-                              </div>
-                              <div className="daily-event-content">
-                                <span className="daily-event-title">
-                                  {event.title}
-                                </span>
-                                {event.goal &&
-                                  event.goal.title !== event.title && (
-                                    <span className="daily-event-goal">
+                                  {event.goal && event.goal.title !== event.title && (
+                                    <span className="selected-event-goal-collapsed">
                                       From: {event.goal.title}
                                     </span>
                                   )}
+                                </div>
+                                {event.isArchived && (
+                                  <span className="archived-badge-collapsed">Archived</span>
+                                )}
                               </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ));
-              })()}
-            </div>
-          )}
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ));
+                })()}
+              </div>
+            )}
+          </div>
         </div>
       )}
-
-      {/* Calendar Legend */}
-      <div className="calendar-legend">
-        <div className="legend-item">
-          <span className="legend-icon" style={{ backgroundColor: "#28a745" }}>
-            🎯
-          </span>
-          <span>Goal Created</span>
-        </div>
-        <div className="legend-item">
-          <span className="legend-icon" style={{ backgroundColor: "#007bff" }}>
-            ✅
-          </span>
-          <span>Milestone Completed</span>
-        </div>
-        <div className="legend-item">
-          <span className="legend-icon" style={{ backgroundColor: "#dc3545" }}>
-            🏆
-          </span>
-          <span>Goal Completed</span>
-        </div>
-      </div>
     </div>
   );
 }

@@ -1,0 +1,63 @@
+/* ===================================
+   FORMS
+   =================================== */
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: #333;
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #e9ecef;
+  border-radius: 6px;
+  font-size: 16px;
+  transition: border-color 0.3s ease;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+/* Form Validation */
+.is-invalid {
+  border-color: #dc3545 !important;
+}
+
+.invalid-feedback {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  font-size: 14px;
+  color: #dc3545;
+}
+
+.form-text {
+  font-size: 12px;
+  color: #6c757d;
+  margin-top: 4px;
+}
+
+/* Character Counter */
+.char-counter {
+  font-size: 12px;
+  color: #6c757d;
+  text-align: right;
+  margin-top: 4px;
+}
+
+.char-counter.warning {
+  color: #ffc107;
+}
+
+.char-counter.danger {
+  color: #dc3545;
+}

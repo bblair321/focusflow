@@ -17,6 +17,7 @@ class Goal(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
+    category = db.Column(db.String(50), default='Personal')  # New category field
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -34,6 +35,7 @@ class Goal(db.Model):
             'id': self.id,
             'title': self.title,
             'description': self.description,
+            'category': self.category,
             'user_id': self.user_id,
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat(),
@@ -41,6 +43,18 @@ class Goal(db.Model):
             'archived_at': self.archived_at.isoformat() if self.archived_at else None,
             'milestones': [milestone.to_dict() for milestone in self.milestones]
         }
+
+# Predefined categories with color codes
+GOAL_CATEGORIES = {
+    'Work': '#3B82F6',      # Blue
+    'Personal': '#10B981',   # Green
+    'Health': '#EF4444',     # Red
+    'Learning': '#F59E0B',   # Amber
+    'Finance': '#8B5CF6',    # Purple
+    'Relationships': '#EC4899', # Pink
+    'Creative': '#06B6D4',   # Cyan
+    'Other': '#6B7280'       # Gray
+}
 
 class Milestone(db.Model):
     id = db.Column(db.Integer, primary_key=True)

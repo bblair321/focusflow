@@ -10,7 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ToastContainer from "./components/ToastContainer";
-import "./App.css";
+import "./styles/index.css";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);

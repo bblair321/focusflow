@@ -28,9 +28,7 @@ function MilestoneList({ goalId, milestones, onMilestoneUpdate }) {
 
       setNewMilestone("");
       onMilestoneUpdate(); // Refresh the goals list
-      if (window.showToast) {
-        window.showToast("Milestone added successfully!", "success");
-      }
+      // Toast notification handled by parent component
     } catch (error) {
       console.error("Failed to create milestone:", error);
       if (window.showToast) {
@@ -57,9 +55,7 @@ function MilestoneList({ goalId, milestones, onMilestoneUpdate }) {
       );
 
       onMilestoneUpdate(); // Refresh the goals list
-      if (window.showToast) {
-        window.showToast("Milestone updated successfully!", "success");
-      }
+      // Toast notification handled by parent component
     } catch (error) {
       console.error("Failed to update milestone:", error);
       if (window.showToast) {
@@ -78,9 +74,7 @@ function MilestoneList({ goalId, milestones, onMilestoneUpdate }) {
       });
 
       onMilestoneUpdate(); // Refresh the goals list
-      if (window.showToast) {
-        window.showToast("Milestone deleted successfully!", "success");
-      }
+      // Toast notification handled by parent component
     } catch (error) {
       console.error("Failed to delete milestone:", error);
       if (window.showToast) {
@@ -147,13 +141,8 @@ function MilestoneList({ goalId, milestones, onMilestoneUpdate }) {
             </span>
             <button
               onClick={() => deleteMilestone(milestone.id)}
-              className="btn btn-secondary"
-              style={{
-                background: "#dc3545",
-                padding: "4px 8px",
-                fontSize: "12px",
-                marginLeft: "8px",
-              }}
+              className="milestone-delete-btn"
+              title="Delete milestone"
             >
               ×
             </button>

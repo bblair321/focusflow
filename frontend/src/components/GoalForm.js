@@ -1,9 +1,30 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
 function GoalForm({ onAddGoal }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("Personal");
+  const [categories, setCategories] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get("/goals/categories", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setCategories(response.data);
+    } catch (error) {
+      console.error("Failed to fetch categories:", error);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -16,11 +37,13 @@ function GoalForm({ onAddGoal }) {
       await onAddGoal({
         title: title.trim(),
         description: description.trim(),
+        category: category,
       });
 
       // Reset form
       setTitle("");
       setDescription("");
+      setCategory("Personal");
     } catch (error) {
       console.error("Failed to create goal:", error);
     } finally {
@@ -51,6 +74,22 @@ function GoalForm({ onAddGoal }) {
           >
             {title.length}/200 characters
           </div>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="category">Category</label>
+          <select
+            id="category"
+            className="form-control"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          >
+            {Object.keys(categories).map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="form-group">

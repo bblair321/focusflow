@@ -110,47 +110,6 @@ function Dashboard({ user }) {
     }
   };
 
-  // Category statistics component
-  const CategoryStats = () => (
-    <div className="card mb-4">
-      <h3 className="mb-3">Goals by Category</h3>
-      <div className="category-stats-grid">
-        {Object.keys(categories).map((category) => {
-          const catStats = categoryStats[category];
-          if (!catStats || catStats.count === 0) return null;
-
-          return (
-            <div key={category} className="category-stat-card">
-              <div className="category-stat-header">
-                <span
-                  className="category-color-dot"
-                  style={{ backgroundColor: categories[category] }}
-                ></span>
-                <h4 className="category-name">{category}</h4>
-              </div>
-              <div className="category-stat-numbers">
-                <div className="category-stat-item">
-                  <span className="stat-number">{catStats.count}</span>
-                  <span className="stat-label">Goals</span>
-                </div>
-                <div className="category-stat-item">
-                  <span className="stat-number">{catStats.percentage}%</span>
-                  <span className="stat-label">Progress</span>
-                </div>
-              </div>
-              <div className="category-stat-details">
-                <small className="text-muted">
-                  {catStats.completedMilestones} of {catStats.totalMilestones}{" "}
-                  milestones completed
-                </small>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-
   return (
     <div className="container">
       <div className="dashboard-header">
@@ -186,9 +145,6 @@ function Dashboard({ user }) {
           <div className="stat-label">Completed Goals</div>
         </div>
       </div>
-
-      {/* Category Statistics */}
-      {Object.keys(categoryStats).length > 0 && <CategoryStats />}
 
       {/* Goal Calendar Section */}
       <div className="card mb-4">
